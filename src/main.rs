@@ -5,7 +5,7 @@ use crossterm::{
     ExecutableCommand,
 };
 use invaders::{
-    enemy::Enemy,
+    enemy::{Enemies, Enemy},
     frame::{self, new_frame, Drawable},
     player::Player,
     render, NUM_COLS,
@@ -39,25 +39,20 @@ fn main() -> Result<(), Box<dyn Error>> {
     });
 
     let mut player = Player::new();
-    let mut enemies = Vec::<Enemy>::new();
-
-    for i in (0..NUM_COLS).step_by(2).rev() {
-        enemies.push(Enemy::new(i, 0));
-    }
+    let mut enemies = Enemies::new();
 
     // Game Loop
     'gameloop: loop {
         // update game loop
         // each update takes a frame
-        for enemy in enemies.iter_mut() {
-            enemy.update();
-        }
-        enemies.retain(|enemy| !enemy.exploded());
+        enemies.update();
 
         for shot in player.shots.iter_mut() {
             shot.update();
         }
         player.shots.retain(|shot| !shot.exploded());
+
+        for shot in player.shots.iter() {}
 
         // init drawable frame
         let mut curr_frame = new_frame();
@@ -81,11 +76,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // Draw and render
         player.draw(&mut curr_frame);
+        enemies.draw(&mut curr_frame);
         for shot in player.shots.iter() {
             shot.draw(&mut curr_frame);
-        }
-        for enemy in enemies.iter() {
-            enemy.draw(&mut curr_frame);
         }
         let _ = render_tx.send(curr_frame);
         thread::sleep(Duration::from_millis(10)); // 100 fps poggers
