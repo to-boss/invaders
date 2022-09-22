@@ -5,10 +5,10 @@ use crossterm::{
     ExecutableCommand,
 };
 use invaders::{
-    enemy::{Enemies, Enemy},
+    enemy::Enemies,
     frame::{self, new_frame, Drawable},
     player::Player,
-    render, NUM_COLS,
+    render,
 };
 use std::{error::Error, io, sync::mpsc, thread, time::Duration};
 
@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     stdout.execute(Hide)?;
 
     // Render Loop
-    // (seperate thread)
+    // (uses seperate thread)
     let (render_tx, render_rx) = mpsc::channel();
     let render_handle = thread::spawn(move || {
         let mut last_frame = frame::new_frame();
@@ -38,6 +38,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     });
 
+    // init game entities
     let mut player = Player::new();
     let mut enemies = Enemies::new();
 
@@ -50,9 +51,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         for shot in player.shots.iter_mut() {
             shot.update();
         }
+        player.handle_shot_collisions(&mut enemies);
         player.shots.retain(|shot| !shot.exploded());
-
-        for shot in player.shots.iter() {}
 
         // init drawable frame
         let mut curr_frame = new_frame();
@@ -76,10 +76,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // Draw and render
         player.draw(&mut curr_frame);
-        enemies.draw(&mut curr_frame);
         for shot in player.shots.iter() {
             shot.draw(&mut curr_frame);
         }
+        enemies.draw(&mut curr_frame);
         let _ = render_tx.send(curr_frame);
         thread::sleep(Duration::from_millis(10)); // 100 fps poggers
     }

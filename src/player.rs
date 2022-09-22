@@ -1,6 +1,7 @@
 use crate::{
+    enemy::Enemies,
     frame::{Drawable, Frame},
-    shot::{self, Shot},
+    shot::Shot,
     NUM_COLS, NUM_ROWS,
 };
 
@@ -24,6 +25,21 @@ impl Player {
     pub fn shoot(&mut self) {
         if self.shots.len() < MAGAZINE_SIZE {
             self.shots.push(Shot::new(self.x, self.y - 1));
+        }
+    }
+
+    pub fn handle_shot_collisions(&mut self, enemies: &mut Enemies) {
+        for shot in self.shots.iter_mut() {
+            let mut hit_enemies = enemies
+                .army
+                .iter_mut()
+                .filter(|enemy| enemy.x == shot.x && enemy.y == shot.y)
+                .collect::<Vec<_>>();
+
+            if hit_enemies.len() > 0 {
+                shot.boom();
+                hit_enemies.iter_mut().for_each(|enemy| enemy.boom());
+            }
         }
     }
 

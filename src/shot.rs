@@ -1,10 +1,13 @@
-use crate::frame::{Drawable, Frame};
+use crate::{
+    frame::{Drawable, Frame},
+    NUM_EXPLODE_FRAMES,
+};
 
 pub struct Shot {
-    x: usize,
-    y: usize,
+    pub x: usize,
+    pub y: usize,
     explode: bool,
-    buffer_frames: usize,
+    explode_frames: usize,
 }
 
 impl Shot {
@@ -13,7 +16,7 @@ impl Shot {
             x,
             y,
             explode: false,
-            buffer_frames: 5,
+            explode_frames: NUM_EXPLODE_FRAMES,
         }
     }
 
@@ -21,12 +24,16 @@ impl Shot {
         if self.y > 0 {
             self.y -= 1;
         } else {
-            if self.buffer_frames > 0 {
-                self.buffer_frames -= 1;
+            if self.explode_frames > 0 {
+                self.explode_frames -= 1;
             } else {
                 self.explode = true;
             }
         }
+    }
+
+    pub fn boom(&mut self) {
+        self.explode = true;
     }
 
     pub fn exploded(&self) -> bool {

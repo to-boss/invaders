@@ -1,12 +1,10 @@
 use crate::{
     frame::{Drawable, Frame},
-    NUM_COLS, NUM_ROWS,
+    NUM_COLS, NUM_EXPLODE_FRAMES, NUM_FRAMES_BETWEEN_ENEMY_MOVING, NUM_ROWS,
 };
 
-const BUFFER_SIZE: usize = 100;
-
 pub struct Enemies {
-    army: Vec<Enemy>,
+    pub army: Vec<Enemy>,
     direction: Direction,
     just_bounced: bool,
 }
@@ -53,14 +51,17 @@ impl Enemies {
         for enemy in self.army.iter_mut() {
             enemy.update(&self.direction, wall_bounce);
         }
+
+        self.army.retain(|enemy| enemy.explode_frames > 0);
     }
 }
 
 pub struct Enemy {
-    x: usize,
-    y: usize,
+    pub x: usize,
+    pub y: usize,
     explode: bool,
     buffer_frames: usize,
+    explode_frames: usize,
 }
 
 impl Enemy {
@@ -69,11 +70,18 @@ impl Enemy {
             x,
             y,
             explode: false,
-            buffer_frames: BUFFER_SIZE,
+            buffer_frames: NUM_FRAMES_BETWEEN_ENEMY_MOVING,
+            explode_frames: NUM_EXPLODE_FRAMES,
         }
     }
 
     pub fn update(&mut self, direction: &Direction, wall_bounce: bool) {
+        if self.explode {
+            if self.explode_frames > 0 {
+                self.explode_frames -= 1;
+                return;
+            }
+        }
         // consume buffer frames before moving the enemy
         if self.buffer_frames > 0 {
             self.buffer_frames -= 1;
@@ -81,7 +89,7 @@ impl Enemy {
         }
 
         if self.buffer_frames == 0 {
-            self.buffer_frames = BUFFER_SIZE;
+            self.buffer_frames = NUM_FRAMES_BETWEEN_ENEMY_MOVING;
         }
 
         if wall_bounce {
@@ -94,6 +102,10 @@ impl Enemy {
             Direction::Left => self.x -= 1,
             Direction::Right => self.x += 1,
         }
+    }
+
+    pub fn boom(&mut self) {
+        self.explode = true;
     }
 
     pub fn exploded(&self) -> bool {
